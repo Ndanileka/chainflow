@@ -42,7 +42,8 @@
 
   <!-- Bottom Section: State Metrics Cards & Controls (Stretched Below) -->
   <div class="pt-8 border-t border-zinc-900 space-y-6">
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <!-- Row 1: Core metrics -->
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
         <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Running Duration</span>
         <strong id="live-period" class="font-mono text-indigo-400 text-2xl block mt-1">0</strong>
@@ -56,12 +57,28 @@
         <strong id="live-payout" class="font-mono text-rose-400 text-2xl block mt-1">{{ currency_symbol }}0.00</strong>
       </div>
       <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">System Yield</span>
+        <strong id="live-yield" class="font-mono text-emerald-400 text-2xl block mt-1">{{ (study.params.promised_return * 100)|integer }}%</strong>
+      </div>
+    </div>
+
+    <!-- Row 2: Psychology & health metrics -->
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Market Sentiment</span>
+        <strong id="live-sentiment" class="font-mono text-cyan-400 text-lg block mt-1 uppercase tracking-wider">optimistic</strong>
+      </div>
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Health Ratio</span>
+        <strong id="live-health-ratio" class="font-mono text-sky-400 text-2xl block mt-1">—</strong>
+      </div>
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
         <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Required Recruits</span>
         <strong id="live-required-recruits" class="font-mono text-amber-400 text-2xl block mt-1">0</strong>
       </div>
       <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
-        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">System Yield</span>
-        <strong id="live-yield" class="font-mono text-emerald-400 text-2xl block mt-1">{{ (study.params.promised_return * 100)|integer }}%</strong>
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Panic Withdrawals</span>
+        <strong id="live-early-withdrawals" class="font-mono text-orange-400 text-2xl block mt-1">0</strong>
       </div>
     </div>
 
@@ -69,6 +86,9 @@
     <div class="flex items-center gap-3">
       <div id="live-status" class="px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
         ACTIVE
+      </div>
+      <div id="live-sentiment-badge" class="px-3 py-1 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider">
+        OPTIMISTIC
       </div>
       <button onclick="window.ChainFlow && window.ChainFlow.replaySimulation()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20 transition flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>

@@ -146,6 +146,33 @@
     return true;
   }
 
+  // Sentiment color mapping
+  const SENTIMENT_STYLES = {
+    optimistic: { bg: "bg-cyan-500/10", border: "border-cyan-500/20", text: "text-cyan-400" },
+    fomo:       { bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400" },
+    concern:    { bg: "bg-amber-500/10", border: "border-amber-500/20", text: "text-amber-400" },
+    panic:      { bg: "bg-rose-500/10", border: "border-rose-500/20", text: "text-rose-400" },
+    collapsed:  { bg: "bg-red-500/10", border: "border-red-500/20", text: "text-red-500" }
+  };
+
+  function updateSentimentUI(sentiment) {
+    const style = SENTIMENT_STYLES[sentiment] || SENTIMENT_STYLES.optimistic;
+
+    // Update the sentiment metric card text
+    const sentimentEl = document.getElementById("live-sentiment");
+    if (sentimentEl) {
+      sentimentEl.textContent = sentiment.toUpperCase();
+      sentimentEl.className = `font-mono text-lg block mt-1 uppercase tracking-wider ${style.text}`;
+    }
+
+    // Update the badge in the playback controls
+    const badgeEl = document.getElementById("live-sentiment-badge");
+    if (badgeEl) {
+      badgeEl.textContent = sentiment.toUpperCase();
+      badgeEl.className = `px-3 py-1 rounded ${style.bg} ${style.border} ${style.text} font-mono text-xs font-bold uppercase tracking-wider`;
+    }
+  }
+
   function startSimulation() {
     if (playbackInterval) clearInterval(playbackInterval);
     
@@ -156,6 +183,7 @@
     const timeline = data.timeline;
     const symbol = data.currency_symbol || "$";
     let currentIndex = 0;
+    let cumulativeEarlyWithdrawals = 0;
 
     // Reset UI Elements
     document.getElementById("live-period").textContent = "0";
@@ -164,6 +192,13 @@
     if (document.getElementById("live-required-recruits")) {
       document.getElementById("live-required-recruits").textContent = "0";
     }
+    if (document.getElementById("live-health-ratio")) {
+      document.getElementById("live-health-ratio").textContent = "—";
+    }
+    if (document.getElementById("live-early-withdrawals")) {
+      document.getElementById("live-early-withdrawals").textContent = "0";
+    }
+    updateSentimentUI("optimistic");
     document.getElementById("live-status").textContent = "ACTIVE";
     document.getElementById("live-status").className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
 
@@ -194,11 +229,34 @@
         document.getElementById("live-required-recruits").textContent = formatInt(state.required_recruits);
       }
 
+      // Health ratio
+      if (document.getElementById("live-health-ratio")) {
+        const hr = state.health_ratio;
+        const hrText = hr >= 100 ? "∞" : hr.toFixed(2) + "x";
+        const hrEl = document.getElementById("live-health-ratio");
+        hrEl.textContent = hrText;
+        // Color code health ratio
+        if (hr >= 3.0) hrEl.className = "font-mono text-emerald-400 text-2xl block mt-1";
+        else if (hr >= 1.5) hrEl.className = "font-mono text-sky-400 text-2xl block mt-1";
+        else if (hr >= 0.8) hrEl.className = "font-mono text-amber-400 text-2xl block mt-1";
+        else hrEl.className = "font-mono text-rose-400 text-2xl block mt-1";
+      }
+
+      // Early withdrawals (cumulative)
+      cumulativeEarlyWithdrawals += (state.early_withdrawals || 0);
+      if (document.getElementById("live-early-withdrawals")) {
+        document.getElementById("live-early-withdrawals").textContent = formatInt(cumulativeEarlyWithdrawals);
+      }
+
+      // Sentiment
+      updateSentimentUI(state.sentiment || "optimistic");
+
       // Status
       const statusEl = document.getElementById("live-status");
       if (state.collapse) {
         statusEl.textContent = "COLLAPSED";
         statusEl.className = "px-3 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider";
+        updateSentimentUI("collapsed");
       } else {
         statusEl.textContent = "ACTIVE";
         statusEl.className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";

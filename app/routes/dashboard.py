@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.services.simulation import SimulationParameters, run_simulation
+from app.services.simulation import SimulationParameters, run_simulation, ModelBehavior
 
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,6 +73,16 @@ CASE_STUDIES = {
             time_interval="month",
             max_periods=60,
             payout_delay=3,
+            behavior=ModelBehavior(
+                warmup_periods=9,  # Moderate grace period
+                fomo_boost=1.5,
+                concern_penalty=0.5,
+                panic_penalty=0.05,
+                concern_withdrawal_rate=0.02,
+                panic_withdrawal_rate=0.15,
+                churn_enabled=True,
+                soft_cap_floor=0.05
+            )
         )
     ),
     "madoff": CaseStudy(
@@ -106,6 +116,16 @@ CASE_STUDIES = {
             time_interval="year",
             max_periods=35,
             payout_delay=1,
+            behavior=ModelBehavior(
+                warmup_periods=6,        # Long 6-year grace period
+                fomo_boost=1.1,          # Very subtle FOMO (exclusive)
+                concern_penalty=0.8,     # Very loyal investors, slow to panic
+                panic_penalty=0.2,
+                concern_withdrawal_rate=0.01,
+                panic_withdrawal_rate=0.05,
+                churn_enabled=True,
+                soft_cap_floor=0.1       # Steady trickle of exclusive clients
+            )
         )
     ),
     "anchor": CaseStudy(
@@ -139,6 +159,16 @@ CASE_STUDIES = {
             time_interval="month",
             max_periods=24,
             payout_delay=2,
+            behavior=ModelBehavior(
+                warmup_periods=6,
+                fomo_boost=1.5,
+                concern_penalty=0.5,
+                panic_penalty=0.05,
+                concern_withdrawal_rate=0.03,
+                panic_withdrawal_rate=0.20,  # Huge bank run
+                churn_enabled=True,
+                soft_cap_floor=0.05
+            )
         )
     ),
     "loom": CaseStudy(
@@ -172,6 +202,16 @@ CASE_STUDIES = {
             time_interval="week",
             max_periods=10,
             payout_delay=1,
+            behavior=ModelBehavior(
+                warmup_periods=0,           # Instant panic if it slows
+                fomo_boost=2.0,             # Hyper viral
+                concern_penalty=0.1,        # Dead stop if it stalls
+                panic_penalty=0.0,
+                concern_withdrawal_rate=0.05,
+                panic_withdrawal_rate=0.30,
+                churn_enabled=False,        # One-shot, you don't "churn" back in
+                soft_cap_floor=0.0          # Hard cap
+            )
         )
     ),
     "crypto": CaseStudy(
@@ -205,6 +245,16 @@ CASE_STUDIES = {
             time_interval="day",
             max_periods=30,
             payout_delay=2,
+            behavior=ModelBehavior(
+                warmup_periods=3,            # Very short grace period
+                fomo_boost=1.8,
+                concern_penalty=0.2,
+                panic_penalty=0.01,
+                concern_withdrawal_rate=0.05,
+                panic_withdrawal_rate=0.25,  # Lightning fast bank run
+                churn_enabled=True,
+                soft_cap_floor=0.05
+            )
         )
     ),
     "mlm": CaseStudy(
@@ -238,6 +288,16 @@ CASE_STUDIES = {
             time_interval="week",
             max_periods=104,
             payout_delay=4,
+            behavior=ModelBehavior(
+                warmup_periods=12,
+                fomo_boost=1.2,
+                concern_penalty=0.7,
+                panic_penalty=0.1,
+                concern_withdrawal_rate=0.01, # People rarely panic withdraw inventory
+                panic_withdrawal_rate=0.02,
+                churn_enabled=True,
+                soft_cap_floor=0.05
+            )
         )
     )
 }

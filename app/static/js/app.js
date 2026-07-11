@@ -22,7 +22,15 @@
   }
 
   function initChart() {
-    destroy(mainChart);
+    // Check if Chart.js already has an instance for this canvas ID and destroy it
+    const existingChart = Chart.getChart("mainSimulationChart");
+    if (existingChart) {
+      existingChart.destroy();
+    }
+    
+    if (mainChart) {
+        mainChart.destroy();
+    }
 
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color = "#a1a1aa"; // zinc-400

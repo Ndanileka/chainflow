@@ -107,15 +107,15 @@ CASE_STUDIES = {
         </p>
         """,
         params=SimulationParameters(
-            initial_participants=5,
+            initial_participants=50,
             contribution_amount=50000.0,
             promised_return=1.10,
-            recruitment_rate=1.05,
-            recruitment_model="linear",
-            population_limit=2000,
+            recruitment_rate=1.15,
+            recruitment_model="exponential",
+            population_limit=5000,
             time_interval="year",
             max_periods=35,
-            payout_delay=1,
+            payout_delay=10,
             behavior=ModelBehavior(
                 warmup_periods=6,        # Long 6-year grace period
                 fomo_boost=1.1,          # Very subtle FOMO (exclusive)

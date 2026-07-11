@@ -293,13 +293,18 @@ class Recruitment:
 
         # Base recruitment (model-specific)
         model = self.params.recruitment_model
+        
+        # If previous_new dropped to 0, use 1 as a spark so the scheme can recover 
+        # if sentiment improves. Otherwise, exponential models hard-lock at 0 forever.
+        effective_previous = max(1, previous_new)
+        
         if model == RecruitmentModel.LINEAR:
             projected = self.params.initial_participants * self.params.recruitment_rate
         elif model == RecruitmentModel.SATURATING:
             saturation = max(0.0, (pop_limit - active_participants) / pop_limit)
-            projected = previous_new * self.params.recruitment_rate * saturation
+            projected = effective_previous * self.params.recruitment_rate * saturation
         else:  # EXPONENTIAL
-            projected = previous_new * self.params.recruitment_rate
+            projected = effective_previous * self.params.recruitment_rate
 
         # Apply soft saturation + sentiment
         projected *= soft_capacity * sentiment_multiplier

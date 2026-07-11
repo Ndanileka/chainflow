@@ -218,15 +218,10 @@ class Recruitment:
         """
         pop_limit = self.params.population_limit
 
-        # Soft saturation: ratio of remaining capacity (0.0 = full, 1.0 = empty)
-        # Using a squared curve so the deceleration is gradual, not a cliff
-        utilization = active_participants / pop_limit if pop_limit > 0 else 1.0
-        soft_capacity = max(0.0, (1.0 - utilization) ** 2)
-
-        # If we're at 100%+ utilization, allow a tiny trickle (1% of base rate)
-        # to model the occasional new recruit who replaces a departing member
-        if soft_capacity <= 0.0:
-            soft_capacity = 0.01
+        # Soft saturation: linear decay as active participants approach the cap
+        # At 0% utilization → 100% capacity. At 100% → 5% trickle (churn floor).
+        utilization = min(1.0, active_participants / pop_limit) if pop_limit > 0 else 1.0
+        soft_capacity = max(0.05, 1.0 - (utilization * 0.95))
 
         # Base recruitment projection (model-specific)
         if self.params.recruitment_model == "linear":
@@ -285,23 +280,35 @@ class CashPool:
 class SentimentEngine:
     """Determines the psychological state of the market based on financial health."""
 
-    def __init__(self, enabled: bool = True) -> None:
+    def __init__(self, enabled: bool = True, warmup_periods: int = 6) -> None:
         self.enabled = enabled
         self.state = SentimentState.OPTIMISTIC
         self.declining_periods = 0  # Consecutive periods of cash pool decline
         self.previous_cash_pool = 0.0
+        self.warmup_periods = warmup_periods  # Grace period before sentiment can go negative
 
     def evaluate(self, cash_pool: float, upcoming_payouts: float, period: int) -> SentimentState:
         """Evaluate sentiment based on health ratio and trend."""
         if not self.enabled:
             return SentimentState.OPTIMISTIC
 
-        # Track cash pool trend
-        if period > 0:
-            if cash_pool < self.previous_cash_pool:
-                self.declining_periods += 1
+        # Grace period: early-stage schemes always look precarious because
+        # they haven't accumulated reserves yet. Don't penalize them.
+        if period < self.warmup_periods:
+            self.previous_cash_pool = cash_pool
+            # During warmup, allow FOMO if things look great, else stay OPTIMISTIC
+            health_ratio = cash_pool / upcoming_payouts if upcoming_payouts > 0 else 999.0
+            if health_ratio >= FOMO_THRESHOLD:
+                self.state = SentimentState.FOMO
             else:
-                self.declining_periods = 0
+                self.state = SentimentState.OPTIMISTIC
+            return self.state
+
+        # Track cash pool trend
+        if cash_pool < self.previous_cash_pool:
+            self.declining_periods += 1
+        else:
+            self.declining_periods = 0
         self.previous_cash_pool = cash_pool
 
         # Calculate health ratio
@@ -311,11 +318,10 @@ class SentimentEngine:
         if health_ratio >= FOMO_THRESHOLD and self.declining_periods == 0:
             self.state = SentimentState.FOMO
         elif health_ratio >= CONCERN_THRESHOLD:
-            # If declining for 2+ periods, shift to CONCERN even if ratio is OK
-            if self.declining_periods >= 2:
+            # If declining for 3+ periods, shift to CONCERN even if ratio is OK
+            if self.declining_periods >= 3:
                 self.state = SentimentState.CONCERN
             elif self.state == SentimentState.CONCERN:
-                # Stay in concern (don't bounce back to optimistic easily)
                 self.state = SentimentState.CONCERN
             else:
                 self.state = SentimentState.OPTIMISTIC
@@ -353,7 +359,10 @@ class Timeline:
         self.batches: list[ParticipantBatch] = []
         self.profitable_participants = 0
         self.collapse_period: int | None = None
-        self.sentiment_engine = SentimentEngine(enabled=params.enable_sentiment)
+        self.sentiment_engine = SentimentEngine(
+            enabled=params.enable_sentiment,
+            warmup_periods=max(6, params.payout_delay * 3),
+        )
         self.peak_cash_pool = 0.0
         self.peak_period: int | None = None
         self.total_early_withdrawals = 0

@@ -81,7 +81,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.02,
                 panic_withdrawal_rate=0.15,
                 churn_enabled=True,
-                soft_cap_floor=0.05
+                soft_cap_floor=0.05,
+                volatility=0.1,
+                shock_probability=0.02
             )
         )
     ),
@@ -124,7 +126,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.01,
                 panic_withdrawal_rate=0.05,
                 churn_enabled=True,
-                soft_cap_floor=0.1       # Steady trickle of exclusive clients
+                soft_cap_floor=0.1,      # Steady trickle of exclusive clients
+                volatility=0.2,
+                shock_probability=0.01
             )
         )
     ),
@@ -155,6 +159,7 @@ CASE_STUDIES = {
             promised_return=1.195,
             recruitment_rate=1.6,
             recruitment_model="exponential",
+            payout_model="yield",
             population_limit=5000,
             time_interval="month",
             max_periods=24,
@@ -167,7 +172,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.03,
                 panic_withdrawal_rate=0.20,  # Huge bank run
                 churn_enabled=True,
-                soft_cap_floor=0.05
+                soft_cap_floor=0.05,
+                volatility=0.15,
+                shock_probability=0.05
             )
         )
     ),
@@ -210,7 +217,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.05,
                 panic_withdrawal_rate=0.30,
                 churn_enabled=False,        # One-shot, you don't "churn" back in
-                soft_cap_floor=0.0          # Hard cap
+                soft_cap_floor=0.0,         # Hard cap
+                volatility=0.3,
+                shock_probability=0.0
             )
         )
     ),
@@ -241,6 +250,7 @@ CASE_STUDIES = {
             promised_return=3.0,
             recruitment_rate=2.5,
             recruitment_model="saturating",
+            payout_model="yield",
             population_limit=20000,
             time_interval="day",
             max_periods=30,
@@ -253,7 +263,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.05,
                 panic_withdrawal_rate=0.25,  # Lightning fast bank run
                 churn_enabled=True,
-                soft_cap_floor=0.05
+                soft_cap_floor=0.05,
+                volatility=0.4,
+                shock_probability=0.1
             )
         )
     ),
@@ -296,7 +308,9 @@ CASE_STUDIES = {
                 concern_withdrawal_rate=0.01, # People rarely panic withdraw inventory
                 panic_withdrawal_rate=0.02,
                 churn_enabled=True,
-                soft_cap_floor=0.05
+                soft_cap_floor=0.05,
+                volatility=0.1,
+                shock_probability=0.01
             )
         )
     )

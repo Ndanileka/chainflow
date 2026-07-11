@@ -44,6 +44,9 @@ class RecruitmentModel(str, Enum):
     LINEAR = "linear"
     SATURATING = "saturating"
 
+class PayoutModel(str, Enum):
+    LUMP_SUM = "lump_sum"
+    YIELD = "yield"
 
 # ─── Pydantic Models ────────────────────────────────────────────────────────
 
@@ -76,6 +79,10 @@ class ModelBehavior(BaseModel):
     # Declining periods needed before CONCERN triggers from trend alone
     declining_periods_threshold: int = 3
 
+    # Randomness (AI Magic)
+    volatility: float = 0.0  # Gaussian noise (0.0 to 1.0)
+    shock_probability: float = 0.0  # Chance per period of random FOMO/PANIC event
+
 
 class SimulationParameters(BaseModel):
     """Input parameters for a single simulation run."""
@@ -85,6 +92,7 @@ class SimulationParameters(BaseModel):
     promised_return: float = Field(ge=1.0)
     recruitment_rate: float = Field(ge=0)
     recruitment_model: RecruitmentModel = RecruitmentModel.EXPONENTIAL
+    payout_model: PayoutModel = PayoutModel.LUMP_SUM
     population_limit: int = Field(ge=1)
     time_interval: str = "period"
     currency: str = "USD"
@@ -163,9 +171,14 @@ class ParticipantBatch:
         self.payout_per_participant = payout_per_participant
         self.paid = False
 
-    @property
-    def total_payout_due(self) -> float:
-        return self.count * self.payout_per_participant
+    def get_payout_due(self, period: int, payout_model: PayoutModel) -> float:
+        if payout_model == PayoutModel.LUMP_SUM:
+            if not self.paid and self.payout_due_period == period:
+                return self.count * self.payout_per_participant
+        elif payout_model == PayoutModel.YIELD:
+            if not self.paid and period > self.period:
+                return self.count * self.payout_per_participant
+        return 0.0
 
 
 class CashPool:
@@ -182,17 +195,23 @@ class CashPool:
         self.balance += amount
         self.total_contributions += amount
 
-    def pay_due_batches(self, batches: list[ParticipantBatch], period: int) -> int:
+    def pay_due_batches(self, batches: list[ParticipantBatch], period: int, payout_model: PayoutModel) -> int:
         profitable = 0
         for batch in batches:
-            if batch.paid or batch.payout_due_period > period:
+            amount_due = batch.get_payout_due(period, payout_model)
+            if amount_due <= 0:
                 continue
-            if self.balance < batch.total_payout_due:
+            if self.balance < amount_due:
                 continue
-            self.balance -= batch.total_payout_due
-            self.total_payouts += batch.total_payout_due
-            batch.paid = True
-            profitable += batch.count
+            self.balance -= amount_due
+            self.total_payouts += amount_due
+            
+            if payout_model == PayoutModel.LUMP_SUM:
+                batch.paid = True
+                profitable += batch.count
+            elif payout_model == PayoutModel.YIELD:
+                profitable += batch.count # They got their yield this period
+                
         return profitable
 
     def process_early_withdrawals(self, amount: float) -> float:
@@ -342,20 +361,29 @@ class BaseSimulator:
         previous_new = self.params.initial_participants
 
         for period in range(self.params.max_periods + 1):
+            # Apply Random Market Shocks
+            forced_sentiment = None
+            if period > 0 and self.params.behavior.shock_probability > 0:
+                if random.random() < self.params.behavior.shock_probability:
+                    forced_sentiment = random.choice([SentimentState.FOMO, SentimentState.PANIC])
+
             # 1. Upcoming payouts (lookahead)
             upcoming_payouts = sum(
-                batch.total_payout_due
+                batch.get_payout_due(period + 1, self.params.payout_model)
                 for batch in self.batches
-                if not batch.paid and batch.payout_due_period <= period + 1
             )
 
             # 2. Evaluate sentiment
-            sentiment = self.sentiment_engine.evaluate(
-                self.cash_pool.balance, upcoming_payouts, period
-            )
+            if forced_sentiment:
+                sentiment = forced_sentiment
+                self.sentiment_engine.state = forced_sentiment
+            else:
+                sentiment = self.sentiment_engine.evaluate(
+                    self.cash_pool.balance, upcoming_payouts, period
+                )
             recruit_mult = self.sentiment_engine.get_recruitment_multiplier()
 
-            # 3. Recruit (sentiment-adjusted, active-based)
+            # 3. Recruit (sentiment-adjusted, active-based + stochastic noise)
             new_participants = (
                 self.params.initial_participants
                 if period == 0
@@ -363,13 +391,41 @@ class BaseSimulator:
                     previous_new, active_participants, period, recruit_mult
                 )
             )
+            
+            # Apply noise to recruitment
+            if period > 0 and self.params.behavior.volatility > 0:
+                noise = max(0.1, random.gauss(1.0, self.params.behavior.volatility))
+                new_participants = max(0, int(new_participants * noise))
+
             total_participants += new_participants
             active_participants += new_participants
             previous_new = new_participants
 
-            # 4. Inflows
-            inflow = new_participants * self.params.contribution_amount
-            self._add_batch(period, new_participants)
+            # 4. Inflows (Stochastic contributions)
+            contribution_mult = 1.0
+            if self.params.behavior.volatility > 0:
+                contribution_mult = max(0.1, random.gauss(1.0, self.params.behavior.volatility))
+            
+            actual_contribution = self.params.contribution_amount * contribution_mult
+            inflow = new_participants * actual_contribution
+            
+            if new_participants > 0:
+                self.cash_pool.contribute(inflow)
+                
+                # Calculate what they are owed per person
+                if self.params.payout_model == PayoutModel.LUMP_SUM:
+                    payout_per = ceil(actual_contribution * self.params.promised_return)
+                else: # YIELD
+                    # For yield, promised_return is 1.0X (e.g. 1.05 = 5% yield per period)
+                    payout_per = actual_contribution * (self.params.promised_return - 1.0)
+                    
+                self.batches.append(ParticipantBatch(
+                    period=period,
+                    count=new_participants,
+                    contribution=inflow,
+                    payout_due_period=period + self.params.payout_delay,
+                    payout_per_participant=payout_per,
+                ))
 
             # 5. Stochastic early withdrawals
             early_withdrawal_rate = self.sentiment_engine.get_early_withdrawal_rate()
@@ -389,21 +445,23 @@ class BaseSimulator:
                         active_participants = max(0, active_participants - early_withdrawals)
 
             # 6. Required recruits to prevent collapse
-            due_unpaid = [
-                b for b in self.batches
-                if not b.paid and b.payout_due_period <= period
-            ]
-            deficit = max(0.0, sum(b.total_payout_due for b in due_unpaid) - self.cash_pool.balance)
+            due_unpaid = sum(b.get_payout_due(period, self.params.payout_model) for b in self.batches)
+            deficit = max(0.0, due_unpaid - self.cash_pool.balance)
             required_recruits = int(ceil(deficit / self.params.contribution_amount)) if deficit > 0 else 0
 
             # 7. Process scheduled payouts
             prev_payouts = self.cash_pool.total_payouts
-            newly_paid = self.cash_pool.pay_due_batches(self.batches, period)
-            self.profitable_participants += newly_paid
+            newly_paid = self.cash_pool.pay_due_batches(self.batches, period, self.params.payout_model)
+            
+            if self.params.payout_model == PayoutModel.LUMP_SUM:
+                self.profitable_participants += newly_paid
+            else:
+                self.profitable_participants = max(self.profitable_participants, newly_paid) # Just track active yielders
+                
             outflow = self.cash_pool.total_payouts - prev_payouts
 
-            # Churn: paid-out participants leave
-            if self.params.behavior.churn_enabled:
+            # Churn: paid-out participants leave (only for lump sum)
+            if self.params.behavior.churn_enabled and self.params.payout_model == PayoutModel.LUMP_SUM:
                 active_participants = max(0, active_participants - newly_paid)
 
             # 8. Track peak
@@ -418,9 +476,14 @@ class BaseSimulator:
             )
 
             # 10. Collapse check
-            pending_payouts = sum(
-                b.total_payout_due for b in self.batches if not b.paid
-            )
+            # Pending payouts is just the future liability.
+            if self.params.payout_model == PayoutModel.LUMP_SUM:
+                pending_payouts = sum(
+                    b.get_payout_due(b.payout_due_period, self.params.payout_model) for b in self.batches if not b.paid
+                )
+            else:
+                pending_payouts = upcoming_payouts  # Yield has no 'end' maturity
+
             losing = total_participants - self.profitable_participants
             collapse = self._has_collapsed(period)
 
@@ -454,26 +517,10 @@ class BaseSimulator:
 
         return states
 
-    def _add_batch(self, period: int, count: int) -> None:
-        if count <= 0:
-            return
-        contribution = count * self.params.contribution_amount
-        self.cash_pool.contribute(contribution)
-        self.batches.append(ParticipantBatch(
-            period=period,
-            count=count,
-            contribution=contribution,
-            payout_due_period=period + self.params.payout_delay,
-            payout_per_participant=ceil(
-                self.params.contribution_amount * self.params.promised_return
-            ),
-        ))
-
     def _has_collapsed(self, period: int) -> bool:
         return any(
-            self.cash_pool.balance < batch.total_payout_due
+            self.cash_pool.balance < batch.get_payout_due(period, self.params.payout_model)
             for batch in self.batches
-            if not batch.paid and batch.payout_due_period <= period
         )
 
 

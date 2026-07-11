@@ -375,3 +375,15 @@ def render_case_study(request: Request, model_id: str, full_page: bool, currency
     
     template = "index.html" if full_page else "partials/article.html"
     return templates.TemplateResponse(request, template, context)
+
+@router.get("/about", response_class=HTMLResponse)
+def about_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("about.html", {"request": request})
+
+@router.get("/leaderboard", response_class=HTMLResponse)
+def leaderboard_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("leaderboard.html", {"request": request})
+
+@router.get("/login", response_class=HTMLResponse)
+def login_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("login.html", {"request": request})

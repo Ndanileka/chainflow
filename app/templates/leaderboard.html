@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard - ChainFlow{% endblock %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 w-full flex-1">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-white tracking-tight">Global Leaderboard</h1>
+      <p class="mt-2 text-sm text-zinc-400">Top survival times in custom chaotic simulations.</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-2">
+      <button class="bg-indigo-600/20 text-indigo-400 px-4 py-2 text-sm font-medium rounded border border-indigo-500/30 hover:bg-indigo-600/30 transition">All Time</button>
+      <button class="bg-zinc-800 text-zinc-400 px-4 py-2 text-sm font-medium rounded hover:bg-zinc-700 transition border border-zinc-700">This Month</button>
+    </div>
+  </div>
+  
+  <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-zinc-800">
+        <thead class="bg-zinc-900/80">
+          <tr>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Rank</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Simulation Creator</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">Model Type</th>
+            <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider">Peak Cash Pool</th>
+            <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider">Survival Time</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/50 bg-transparent">
+          
+          <tr class="hover:bg-zinc-800/20 transition cursor-default group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 font-bold border border-yellow-500/30">1</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-lg">NX</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-white group-hover:text-indigo-400 transition">Nexus_Architect</div>
+                  <div class="text-xs text-zinc-500">Volatility: 0.12</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">Yield Drip</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-zinc-300 font-mono">
+              $412,550,000
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-white">
+              114 Months
+            </td>
+          </tr>
+
+          <tr class="hover:bg-zinc-800/20 transition cursor-default group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-300/20 text-zinc-300 font-bold border border-zinc-300/30">2</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow-lg">VK</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-white group-hover:text-indigo-400 transition">VoidKnight</div>
+                  <div class="text-xs text-zinc-500">Volatility: 0.45</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-wider">Lump Sum</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-zinc-300 font-mono">
+              $84,200,500
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-white">
+              98 Months
+            </td>
+          </tr>
+
+          <tr class="hover:bg-zinc-800/20 transition cursor-default group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-700/30 text-amber-600 font-bold border border-amber-700/40">3</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg">AL</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-white group-hover:text-indigo-400 transition">Alpha_Tester</div>
+                  <div class="text-xs text-zinc-500">Volatility: 0.05</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">Yield Drip</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-zinc-300 font-mono">
+              $290,110,000
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-white">
+              87 Months
+            </td>
+          </tr>
+
+          <tr class="hover:bg-zinc-800/20 transition cursor-default group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center w-8 h-8 text-zinc-500 font-bold">4</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-400 font-bold text-xs">QT</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-white group-hover:text-indigo-400 transition">QuantTrader</div>
+                  <div class="text-xs text-zinc-500">Volatility: 0.22</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">Yield Drip</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-zinc-300 font-mono">
+              $14,500,000
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-zinc-300">
+              62 Months
+            </td>
+          </tr>
+
+          <tr class="hover:bg-zinc-800/20 transition cursor-default group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center w-8 h-8 text-zinc-500 font-bold">5</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-400 font-bold text-xs">GR</div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-white group-hover:text-indigo-400 transition">GridRunner</div>
+                  <div class="text-xs text-zinc-500">Volatility: 0.18</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-wider">Lump Sum</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-zinc-300 font-mono">
+              $9,100,500
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-zinc-300">
+              55 Months
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

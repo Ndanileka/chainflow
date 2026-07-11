@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}About - ChainFlow{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8 w-full flex-1">
+  <div class="text-center mb-16 relative">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight relative z-10">Understanding the Mechanics of Collapse</h1>
+    <p class="mt-4 text-lg text-zinc-400 max-w-2xl mx-auto relative z-10">ChainFlow is an interactive educational tool designed to visualize the mathematical certainty behind unsustainable financial systems.</p>
+  </div>
+
+  <div class="space-y-12">
+    <section class="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-8 backdrop-blur-sm shadow-xl">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white">The Math Never Lies</h2>
+      </div>
+      <div class="prose prose-invert prose-zinc text-zinc-300">
+        <p>Whether it is a classic Ponzi scheme from the 1920s, a multi-level marketing (MLM) structure from the 1990s, or a decentralized yield farm from the 2020s, the fundamental mathematics remain identical: early participants are paid using the capital of later participants.</p>
+        <p>Because the promised returns exceed the actual value generated (usually zero), the system requires an exponentially growing base of new recruits. Once the required influx of capital exceeds the available local population or market saturation point, a liquidity crisis triggers a sudden and catastrophic collapse.</p>
+      </div>
+    </section>
+
+    <section class="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-8 backdrop-blur-sm shadow-xl">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white">Yield Drip vs. Lump Sum</h2>
+      </div>
+      <div class="prose prose-invert prose-zinc text-zinc-300">
+        <p>Our simulation engine supports two primary models of wealth extraction:</p>
+        <ul>
+          <li><strong>Lump Sum Maturity:</strong> Participants lock their capital for a set period and then withdraw their principal and profit all at once. This creates massive, unpredictable drains on the cash pool (e.g., Madoff, Blessing Loom).</li>
+          <li><strong>Yield Drip:</strong> The scheme promises an APY (e.g., 20%) and pays it out incrementally while holding the principal hostage. This slows the drain on the cash pool, allowing the illusion of solvency to persist for much longer before the inevitable bank run (e.g., Anchor Protocol).</li>
+        </ul>
+      </div>
+    </section>
+    
+    <section class="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-8 backdrop-blur-sm shadow-xl">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white">Disclaimer</h2>
+      </div>
+      <div class="prose prose-invert prose-zinc text-zinc-300">
+        <p>ChainFlow is an open-source educational project. It is designed solely for academic and informational purposes to demonstrate the fragility of unsustainable financial systems. It does not provide financial advice, nor does it encourage the creation or participation in any such schemes.</p>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -184,94 +184,98 @@
   function startSimulation() {
     if (playbackInterval) clearInterval(playbackInterval);
     
-    const data = payload();
-    if (!data || !window.Chart) return;
-    if (!initChart()) return;
-
-    const timeline = data.timeline;
-    const symbol = data.currency_symbol || "$";
-    let currentIndex = 0;
-    let cumulativeEarlyWithdrawals = 0;
-
-    // Reset UI Elements
-    document.getElementById("live-period").textContent = "0";
-    document.getElementById("live-participants").textContent = "0";
-    document.getElementById("live-payout").textContent = symbol + "0.00";
-    if (document.getElementById("live-required-recruits")) {
-      document.getElementById("live-required-recruits").textContent = "0";
-    }
-    if (document.getElementById("live-health-ratio")) {
-      document.getElementById("live-health-ratio").textContent = "—";
-    }
-    if (document.getElementById("live-early-withdrawals")) {
-      document.getElementById("live-early-withdrawals").textContent = "0";
-    }
-    updateSentimentUI("optimistic");
-    document.getElementById("live-status").textContent = "ACTIVE";
-    document.getElementById("live-status").className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
-
-    playbackInterval = setInterval(() => {
-      if (currentIndex >= timeline.length) {
-        clearInterval(playbackInterval);
-        return;
-      }
-
-      const state = timeline[currentIndex];
-      const prevState = currentIndex > 0 ? timeline[currentIndex - 1] : null;
-
-      // Calculate Period Outflow (Outflow this specific period)
-      const periodOutflow = prevState ? Math.max(0, state.total_payouts - prevState.total_payouts) : state.total_payouts;
-
-      // Push state to chart
-      mainChart.data.labels.push(state.label);
-      mainChart.data.datasets[0].data.push(state.total_participants);
-      mainChart.data.datasets[1].data.push(state.cash_pool);
-      mainChart.data.datasets[2].data.push(periodOutflow);
-      mainChart.update();
-
-      // Update Tickers
-      document.getElementById("live-period").textContent = state.label;
-      document.getElementById("live-participants").textContent = formatInt(state.total_participants);
-      document.getElementById("live-payout").textContent = formatCurrency(periodOutflow);
-      if (document.getElementById("live-required-recruits")) {
-        document.getElementById("live-required-recruits").textContent = formatInt(state.required_recruits);
-      }
-
-      // Health ratio
-      if (document.getElementById("live-health-ratio")) {
-        const hr = state.health_ratio;
-        const hrText = hr >= 100 ? "∞" : hr.toFixed(2) + "x";
-        const hrEl = document.getElementById("live-health-ratio");
-        hrEl.textContent = hrText;
-        // Color code health ratio
-        if (hr >= 3.0) hrEl.className = "font-mono text-emerald-400 text-2xl block mt-1";
-        else if (hr >= 1.5) hrEl.className = "font-mono text-sky-400 text-2xl block mt-1";
-        else if (hr >= 0.8) hrEl.className = "font-mono text-amber-400 text-2xl block mt-1";
-        else hrEl.className = "font-mono text-rose-400 text-2xl block mt-1";
-      }
-
-      // Early withdrawals (cumulative)
-      cumulativeEarlyWithdrawals += (state.early_withdrawals || 0);
-      if (document.getElementById("live-early-withdrawals")) {
-        document.getElementById("live-early-withdrawals").textContent = formatInt(cumulativeEarlyWithdrawals);
-      }
-
-      // Sentiment
-      updateSentimentUI(state.sentiment || "optimistic");
-
-      // Status
-      const statusEl = document.getElementById("live-status");
-      if (state.collapse) {
-        statusEl.textContent = "COLLAPSED";
-        statusEl.className = "px-3 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider";
-        updateSentimentUI("collapsed");
-      } else {
-        statusEl.textContent = "ACTIVE";
-        statusEl.className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
-      }
-
-      currentIndex++;
-    }, 120); // playback interval speed
+    // Defer execution by 50ms to allow HTMX to finish painting the DOM
+    // If we don't do this, Chart.js might measure a 0x0 container and stretch the canvas (zooming bug)
+    setTimeout(() => {
+        const data = payload();
+        if (!data || !window.Chart) return;
+        if (!initChart()) return;
+    
+        const timeline = data.timeline;
+        const symbol = data.currency_symbol || "$";
+        let currentIndex = 0;
+        let cumulativeEarlyWithdrawals = 0;
+    
+        // Reset UI Elements
+        document.getElementById("live-period").textContent = "0";
+        document.getElementById("live-participants").textContent = "0";
+        document.getElementById("live-payout").textContent = symbol + "0.00";
+        if (document.getElementById("live-required-recruits")) {
+          document.getElementById("live-required-recruits").textContent = "0";
+        }
+        if (document.getElementById("live-health-ratio")) {
+          document.getElementById("live-health-ratio").textContent = "—";
+        }
+        if (document.getElementById("live-early-withdrawals")) {
+          document.getElementById("live-early-withdrawals").textContent = "0";
+        }
+        updateSentimentUI("optimistic");
+        document.getElementById("live-status").textContent = "ACTIVE";
+        document.getElementById("live-status").className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
+    
+        playbackInterval = setInterval(() => {
+          if (currentIndex >= timeline.length) {
+            clearInterval(playbackInterval);
+            return;
+          }
+    
+          const state = timeline[currentIndex];
+          const prevState = currentIndex > 0 ? timeline[currentIndex - 1] : null;
+    
+          // Calculate Period Outflow (Outflow this specific period)
+          const periodOutflow = prevState ? Math.max(0, state.total_payouts - prevState.total_payouts) : state.total_payouts;
+    
+          // Push state to chart
+          mainChart.data.labels.push(state.label);
+          mainChart.data.datasets[0].data.push(state.total_participants);
+          mainChart.data.datasets[1].data.push(state.cash_pool);
+          mainChart.data.datasets[2].data.push(periodOutflow);
+          mainChart.update();
+    
+          // Update Tickers
+          document.getElementById("live-period").textContent = state.label;
+          document.getElementById("live-participants").textContent = formatInt(state.total_participants);
+          document.getElementById("live-payout").textContent = formatCurrency(periodOutflow);
+          if (document.getElementById("live-required-recruits")) {
+            document.getElementById("live-required-recruits").textContent = formatInt(state.required_recruits);
+          }
+    
+          // Health ratio
+          if (document.getElementById("live-health-ratio")) {
+            const hr = state.health_ratio;
+            const hrText = hr >= 100 ? "∞" : hr.toFixed(2) + "x";
+            const hrEl = document.getElementById("live-health-ratio");
+            hrEl.textContent = hrText;
+            // Color code health ratio
+            if (hr >= 3.0) hrEl.className = "font-mono text-emerald-400 text-2xl block mt-1";
+            else if (hr >= 1.5) hrEl.className = "font-mono text-sky-400 text-2xl block mt-1";
+            else if (hr >= 0.8) hrEl.className = "font-mono text-amber-400 text-2xl block mt-1";
+            else hrEl.className = "font-mono text-rose-400 text-2xl block mt-1";
+          }
+    
+          // Early withdrawals (cumulative)
+          cumulativeEarlyWithdrawals += (state.early_withdrawals || 0);
+          if (document.getElementById("live-early-withdrawals")) {
+            document.getElementById("live-early-withdrawals").textContent = formatInt(cumulativeEarlyWithdrawals);
+          }
+    
+          // Sentiment
+          updateSentimentUI(state.sentiment || "optimistic");
+    
+          // Status
+          const statusEl = document.getElementById("live-status");
+          if (state.collapse) {
+            statusEl.textContent = "COLLAPSED";
+            statusEl.className = "px-3 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider";
+            updateSentimentUI("collapsed");
+          } else {
+            statusEl.textContent = "ACTIVE";
+            statusEl.className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
+          }
+    
+          currentIndex++;
+        }, 120); // playback interval speed
+    }, 50);
   }
 
   window.ChainFlow = { startSimulation, replaySimulation: startSimulation };

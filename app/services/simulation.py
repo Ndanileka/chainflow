@@ -202,21 +202,45 @@ class Recruitment:
     def next_count(
         self,
         previous_new: int,
-        total_participants: int,
+        active_participants: int,
         period: int,
         sentiment_multiplier: float = 1.0,
     ) -> int:
-        remaining = self.params.population_limit - total_participants
-        if remaining <= 0:
-            return 0
+        """
+        Calculate new recruits for this period.
+        
+        Uses `active_participants` (unpaid users still in the system) instead of
+        `total_participants` (cumulative all-time). This models real-world churn:
+        once a user is paid out and leaves, their "slot" opens for a new recruit.
+        
+        A soft saturation curve is applied to ALL recruitment models so that
+        recruitment decays gradually near the population cap instead of hard-stopping.
+        """
+        pop_limit = self.params.population_limit
 
+        # Soft saturation: ratio of remaining capacity (0.0 = full, 1.0 = empty)
+        # Using a squared curve so the deceleration is gradual, not a cliff
+        utilization = active_participants / pop_limit if pop_limit > 0 else 1.0
+        soft_capacity = max(0.0, (1.0 - utilization) ** 2)
+
+        # If we're at 100%+ utilization, allow a tiny trickle (1% of base rate)
+        # to model the occasional new recruit who replaces a departing member
+        if soft_capacity <= 0.0:
+            soft_capacity = 0.01
+
+        # Base recruitment projection (model-specific)
         if self.params.recruitment_model == "linear":
             projected = self.params.initial_participants * self.params.recruitment_rate
         elif self.params.recruitment_model == "saturating":
-            saturation = max(0.0, remaining / self.params.population_limit)
+            # Saturating model already has its own decay, stack with soft cap
+            saturation = max(0.0, (pop_limit - active_participants) / pop_limit)
             projected = previous_new * self.params.recruitment_rate * saturation
         else:
+            # Exponential
             projected = previous_new * self.params.recruitment_rate
+
+        # Apply soft saturation curve to all models
+        projected *= soft_capacity
 
         # Apply sentiment multiplier (FOMO boost or FUD penalty)
         projected *= sentiment_multiplier
@@ -224,7 +248,7 @@ class Recruitment:
         if period > 1 and projected > 0:
             projected = max(1, projected)
 
-        return min(remaining, floor(projected))
+        return max(0, floor(projected))
 
 
 class CashPool:
@@ -337,6 +361,7 @@ class Timeline:
     def run(self) -> list[TimelineState]:
         states: list[TimelineState] = []
         total_participants = 0
+        active_participants = 0  # Unpaid users still "in" the system
         previous_new = self.params.initial_participants
 
         for period in range(self.params.max_periods + 1):
@@ -353,15 +378,17 @@ class Timeline:
             )
             recruitment_multiplier = self.sentiment_engine.get_recruitment_multiplier()
 
-            # --- 3. Recruit new participants (sentiment-adjusted) ---
+            # --- 3. Recruit new participants (use ACTIVE count, not total) ---
+            # This means paid-out users free up capacity → churn
             new_participants = (
                 self.params.initial_participants
                 if period == 0
                 else self.recruitment.next_count(
-                    previous_new, total_participants, period, recruitment_multiplier
+                    previous_new, active_participants, period, recruitment_multiplier
                 )
             )
             total_participants += new_participants
+            active_participants += new_participants
             previous_new = new_participants
 
             # --- 4. Process inflows (new contributions) ---
@@ -384,6 +411,8 @@ class Timeline:
                     withdrawal_amount = early_withdrawals * self.params.contribution_amount
                     self.cash_pool.process_early_withdrawals(withdrawal_amount)
                     self.total_early_withdrawals += early_withdrawals
+                    # Early withdrawals reduce active participant count (they left)
+                    active_participants = max(0, active_participants - early_withdrawals)
 
             # --- 6. Calculate required recruits to prevent collapse ---
             due_unpaid = [
@@ -397,10 +426,14 @@ class Timeline:
 
             # --- 7. Process scheduled payouts ---
             prev_total_payouts = self.cash_pool.total_payouts
-            self.profitable_participants += self.cash_pool.pay_due_batches(
+            newly_paid = self.cash_pool.pay_due_batches(
                 self.batches, period
             )
+            self.profitable_participants += newly_paid
             outflow = self.cash_pool.total_payouts - prev_total_payouts
+
+            # Paid-out participants leave the system (churn)
+            active_participants = max(0, active_participants - newly_paid)
 
             # --- 8. Track peak liquidity ---
             if self.cash_pool.balance > self.peak_cash_pool:

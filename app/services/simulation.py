@@ -14,6 +14,7 @@ class SimulationParameters:
     recruitment_model: str
     population_limit: int
     time_interval: str
+    currency: str = "USD"
     max_periods: int = 52
     payout_delay: int = 2
 
@@ -44,6 +45,7 @@ class TimelineState:
     profitable_participants: int
     losing_participants: int
     pending_payouts: float
+    required_recruits: int
     collapse: bool
 
 
@@ -58,6 +60,7 @@ class SimulationSummary:
     collapse_period: int | None
     collapse_label: str
     sustainability_ratio: float
+    currency: str = "USD"
 
 
 def run_simulation(params: SimulationParameters) -> dict[str, object]:
@@ -89,6 +92,7 @@ def run_monte_carlo(params: SimulationParameters, iterations: int = 500) -> dict
             recruitment_model=normalized.recruitment_model,
             population_limit=normalized.population_limit,
             time_interval=normalized.time_interval,
+            currency=normalized.currency,
             max_periods=normalized.max_periods,
             payout_delay=normalized.payout_delay,
         )
@@ -126,7 +130,8 @@ def run_monte_carlo(params: SimulationParameters, iterations: int = 500) -> dict
             "avg_max_cash_pool": avg_max_pool,
             "avg_profitable_ratio": round(avg_profitable * 100, 1),
             "survival_rate": round((survived / iterations) * 100, 1),
-            "time_interval": normalized.time_interval
+            "time_interval": normalized.time_interval,
+            "currency": normalized.currency
         },
         "histogram": {
             "labels": hist_labels,
@@ -146,6 +151,7 @@ def _normalize(params: SimulationParameters) -> SimulationParameters:
         else "exponential",
         population_limit=max(1, int(params.population_limit)),
         time_interval=params.time_interval or "period",
+        currency=params.currency if params.currency in {"USD", "ZAR"} else "USD",
         max_periods=max(1, min(520, int(params.max_periods))),
         payout_delay=max(1, min(52, int(params.payout_delay))),
     )
@@ -222,6 +228,19 @@ class Timeline:
             previous_new = new_participants
             self._add_batch(period, new_participants)
 
+            # Calculate required recruits to prevent collapse in this period
+            due_unpaid = [
+                batch for batch in self.batches if not batch.paid and batch.payout_due_period <= period
+            ]
+            payouts_due = sum(batch.total_payout_due for batch in due_unpaid)
+            current_balance = self.cash_pool.balance
+            deficit = max(0.0, payouts_due - current_balance)
+
+            if deficit > 0:
+                required_recruits = int(ceil(deficit / self.params.contribution_amount))
+            else:
+                required_recruits = 0
+
             self.profitable_participants += self.cash_pool.pay_due_batches(
                 self.batches,
                 period,
@@ -247,6 +266,7 @@ class Timeline:
                     profitable_participants=self.profitable_participants,
                     losing_participants=losing_participants,
                     pending_payouts=round(pending_payouts, 2),
+                    required_recruits=required_recruits,
                     collapse=collapse,
                 )
             )
@@ -280,12 +300,7 @@ class Timeline:
         cannot_pay_due = any(
             self.cash_pool.balance < batch.total_payout_due for batch in due_unpaid
         )
-        no_recruits_left = (
-            new_participants == 0
-            and period > 0
-            and any(not batch.paid for batch in self.batches)
-        )
-        return cannot_pay_due or no_recruits_left
+        return cannot_pay_due
 
 
 def _summarize(
@@ -312,4 +327,5 @@ def _summarize(
         collapse_period=collapse_period,
         collapse_label=collapse_label,
         sustainability_ratio=round(sustainability_ratio, 2),
+        currency=params.currency
     )

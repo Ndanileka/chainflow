@@ -3,6 +3,7 @@
   href="#"
   hx-get="/models/{{ s.id }}" 
   hx-target="#article-content"
+  hx-include="[name='currency']"
   hx-push-url="false"
   class="group block p-5 rounded-xl border {% if active_id == s.id %}border-indigo-500 bg-indigo-500/5{% else %}border-zinc-800/80 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40{% endif %} transition-all flex flex-col justify-between"
 >

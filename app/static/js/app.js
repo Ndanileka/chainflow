@@ -3,7 +3,8 @@
   let playbackInterval;
 
   function formatCurrency(num) {
-    return '$' + parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const symbol = (payload() && payload().currency_symbol) ? payload().currency_symbol : "$";
+    return symbol + parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   }
 
   function formatInt(num) {
@@ -28,6 +29,9 @@
 
     const canvas = document.getElementById("mainSimulationChart");
     if (!canvas) return false;
+
+    const data = payload();
+    const symbol = (data && data.currency_symbol) ? data.currency_symbol : "$";
 
     mainChart = new Chart(canvas, {
       type: "line",
@@ -90,6 +94,20 @@
             borderColor: 'rgba(63, 63, 70, 0.5)',
             borderWidth: 1,
             padding: 10,
+            callbacks: {
+              label: function (context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.datasetIndex > 0) { // Liquidity or Outflow
+                  label += formatCurrency(context.parsed.y);
+                } else {
+                  label += formatInt(context.parsed.y);
+                }
+                return label;
+              }
+            }
           },
           legend: {
             labels: {
@@ -116,7 +134,7 @@
           "y-capital": {
             type: "linear",
             position: "right",
-            title: { display: true, text: "Capital ($)", color: "#10b981", font: { family: "'Inter', sans-serif", size: 10, weight: 600 }, textTransform: 'uppercase' },
+            title: { display: true, text: `Capital (${symbol})`, color: "#10b981", font: { family: "'Inter', sans-serif", size: 10, weight: 600 }, textTransform: 'uppercase' },
             ticks: { color: "#71717a", font: { family: "'JetBrains Mono', monospace", size: 10 } },
             grid: { drawOnChartArea: false }, // avoid duplicate grid lines overlapping
             border: { display: false }
@@ -136,12 +154,16 @@
     if (!initChart()) return;
 
     const timeline = data.timeline;
+    const symbol = data.currency_symbol || "$";
     let currentIndex = 0;
 
     // Reset UI Elements
     document.getElementById("live-period").textContent = "0";
     document.getElementById("live-participants").textContent = "0";
-    document.getElementById("live-payout").textContent = "$0.00";
+    document.getElementById("live-payout").textContent = symbol + "0.00";
+    if (document.getElementById("live-required-recruits")) {
+      document.getElementById("live-required-recruits").textContent = "0";
+    }
     document.getElementById("live-status").textContent = "ACTIVE";
     document.getElementById("live-status").className = "px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider";
 
@@ -168,6 +190,9 @@
       document.getElementById("live-period").textContent = state.label;
       document.getElementById("live-participants").textContent = formatInt(state.total_participants);
       document.getElementById("live-payout").textContent = formatCurrency(periodOutflow);
+      if (document.getElementById("live-required-recruits")) {
+        document.getElementById("live-required-recruits").textContent = formatInt(state.required_recruits);
+      }
 
       // Status
       const statusEl = document.getElementById("live-status");

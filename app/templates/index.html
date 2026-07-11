@@ -6,8 +6,21 @@
   <!-- Sidebar -->
   <aside class="w-full shrink-0 border-r border-zinc-900 bg-[#09090b] md:w-96 md:overflow-y-auto">
     <div class="p-6">
-      <h1 class="text-xl font-bold tracking-tight text-white mb-1">ChainFlow</h1>
-      <p class="text-xs text-zinc-500 mb-8 uppercase tracking-widest">Simulation & System Analytics</p>
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white mb-1">ChainFlow</h1>
+          <p class="text-xs text-zinc-500 uppercase tracking-widest">Simulation & System Analytics</p>
+        </div>
+        <div>
+          <select name="currency" 
+                  hx-get="/models/{{ active_id }}"
+                  hx-target="#article-content"
+                  class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-400 focus:outline-none focus:border-indigo-500 cursor-pointer">
+            <option value="USD" {% if currency == "USD" %}selected{% endif %}>USD ($)</option>
+            <option value="ZAR" {% if currency == "ZAR" %}selected{% endif %}>ZAR (R)</option>
+          </select>
+        </div>
+      </div>
       
       <nav class="space-y-4">
         <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4">Case Studies</h2>

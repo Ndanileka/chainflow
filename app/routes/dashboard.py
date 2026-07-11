@@ -1,7 +1,4 @@
-from __future__ import annotations
-
-import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -14,9 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 router = APIRouter()
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-def currency(value: float) -> str:
+def currency(value: float, currency_type: str = "USD") -> str:
+    symbol = "R" if currency_type == "ZAR" else "$"
     try:
-        return f"${float(value):,.2f}"
+        return f"{symbol}{float(value):,.2f}"
     except:
         return str(value)
 
@@ -244,15 +242,15 @@ CASE_STUDIES = {
 }
 
 @router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request) -> HTMLResponse:
+def dashboard(request: Request, currency: str = "USD") -> HTMLResponse:
     # Default to classic
-    return render_case_study(request, "classic", full_page=True)
+    return render_case_study(request, "classic", full_page=True, currency=currency)
 
 
 @router.get("/models/{model_id}", response_class=HTMLResponse)
-def load_model(request: Request, model_id: str) -> HTMLResponse:
+def load_model(request: Request, model_id: str, currency: str = "USD") -> HTMLResponse:
     is_htmx = request.headers.get("HX-Request") == "true"
-    return render_case_study(request, model_id, full_page=not is_htmx)
+    return render_case_study(request, model_id, full_page=not is_htmx, currency=currency)
 
 
 @router.get("/models/{model_id}/history", response_class=HTMLResponse)
@@ -270,12 +268,20 @@ def load_model_history(request: Request, model_id: str) -> HTMLResponse:
     )
 
 
-def render_case_study(request: Request, model_id: str, full_page: bool) -> HTMLResponse:
+def render_case_study(request: Request, model_id: str, full_page: bool, currency: str = "USD") -> HTMLResponse:
     study = CASE_STUDIES.get(model_id)
     if not study:
         raise HTTPException(status_code=404, detail="Model not found")
 
-    result = run_simulation(study.params)
+    # Override currency and apply scaling factor (1 USD = 18 ZAR)
+    rate = 18.0 if currency == "ZAR" else 1.0
+    sim_params = replace(
+        study.params,
+        currency=currency,
+        contribution_amount=study.params.contribution_amount * rate
+    )
+
+    result = run_simulation(sim_params)
     
     # We will pass the full JSON timeline to the frontend to animate it
     context = {
@@ -284,9 +290,12 @@ def render_case_study(request: Request, model_id: str, full_page: bool) -> HTMLR
         "studies": CASE_STUDIES.values(),
         "active_id": model_id,
         "full_page": full_page,
+        "currency": currency,
+        "currency_symbol": "R" if currency == "ZAR" else "$",
         "full_payload": json.dumps({
             "timeline": result["timeline"],
-            "summary": result["summary"]
+            "summary": result["summary"],
+            "currency_symbol": "R" if currency == "ZAR" else "$"
         })
     }
     

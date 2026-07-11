@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="flex h-screen bg-[#09090b] flex-col md:flex-row overflow-hidden text-zinc-300">
+  
+  <!-- Sidebar -->
+  <aside class="w-full shrink-0 border-r border-zinc-900 bg-[#09090b] md:w-96 md:overflow-y-auto">
+    <div class="p-6">
+      <h1 class="text-xl font-bold tracking-tight text-white mb-1">ChainFlow</h1>
+      <p class="text-xs text-zinc-500 mb-8 uppercase tracking-widest">Simulation & System Analytics</p>
+      
+      <nav class="space-y-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-4">Case Studies</h2>
+        <div id="sidebar-nav" class="space-y-4">
+          {% include "partials/sidebar_nav.html" %}
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="flex-1 overflow-y-auto p-6 md:p-10" id="article-content">
+    {% include "partials/article.html" %}
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+<form id="scenario-form" class="panel p-4">
+  <div class="flex items-start justify-between gap-3 border-b border-zinc-800 pb-3 mb-3">
+    <div>
+      <h2 class="text-sm font-bold text-white uppercase tracking-wider">Scenario Setup</h2>
+    </div>
+    {% if active_id %}
+      <a href="/scenarios/{{ active_id }}" class="text-xs font-mono text-teal-500 hover:text-teal-400">ID:{{ active_id }}</a>
+    {% endif %}
+  </div>
+
+  <label class="mt-2 block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="name">Name</label>
+  <input id="name" name="name" value="{{ scenario.name }}" class="field mt-1" maxlength="120">
+
+  <div class="mt-4 grid grid-cols-2 gap-3">
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="initial_participants">
+      Initial size
+      <input id="initial_participants" name="initial_participants" type="number" min="1" value="{{ params.initial_participants }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="contribution_amount">
+      Amount
+      <input id="contribution_amount" name="contribution_amount" type="number" min="1" step="0.01" value="{{ params.contribution_amount }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="promised_return">
+      Return mult
+      <input id="promised_return" name="promised_return" type="number" min="1" step="0.05" value="{{ params.promised_return }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="recruitment_rate">
+      Recruit rate
+      <input id="recruitment_rate" name="recruitment_rate" type="number" min="0" step="0.05" value="{{ params.recruitment_rate }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="population_limit">
+      Pop limit
+      <input id="population_limit" name="population_limit" type="number" min="1" value="{{ params.population_limit }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="max_periods">
+      Max periods
+      <input id="max_periods" name="max_periods" type="number" min="1" max="520" value="{{ params.max_periods }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="payout_delay">
+      Delay
+      <input id="payout_delay" name="payout_delay" type="number" min="1" max="52" value="{{ params.payout_delay }}" class="field mt-1">
+    </label>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="time_interval">
+      Interval
+      <select id="time_interval" name="time_interval" class="field mt-1">
+        {% for interval in ["day", "week", "month", "quarter"] %}
+          <option value="{{ interval }}" {% if params.time_interval == interval %}selected{% endif %}>{{ interval|title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <label class="mt-4 block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="recruitment_model">Growth model</label>
+  <select id="recruitment_model" name="recruitment_model" class="field mt-1">
+    <option value="exponential" {% if params.recruitment_model == "exponential" %}selected{% endif %}>Exponential</option>
+    <option value="linear" {% if params.recruitment_model == "linear" %}selected{% endif %}>Linear</option>
+    <option value="saturating" {% if params.recruitment_model == "saturating" %}selected{% endif %}>Saturating</option>
+  </select>
+
+  <label class="mt-4 block text-xs font-semibold uppercase tracking-wide text-zinc-400" for="compare_to_id">Compare To (Optional)</label>
+  <select id="compare_to_id" name="compare_to_id" class="field mt-1">
+    <option value="">-- None --</option>
+    {% for s in scenarios %}
+      <option value="{{ s.id }}">{{ s.name }} (ID: {{ s.id }})</option>
+    {% endfor %}
+  </select>
+
+  <div class="mt-6 grid grid-cols-2 gap-2">
+    <button
+      type="button"
+      class="btn-primary"
+      hx-post="/simulate"
+      hx-target="#results"
+      hx-include="#scenario-form"
+      hx-swap="innerHTML">
+      Execute
+    </button>
+    <button
+      type="button"
+      class="btn-primary bg-indigo-600 hover:bg-indigo-500 border-indigo-600"
+      hx-post="/simulate/monte-carlo"
+      hx-target="#results"
+      hx-include="#scenario-form"
+      hx-swap="innerHTML">
+      Monte Carlo
+    </button>
+    <button
+      type="button"
+      class="btn-secondary col-span-2"
+      hx-post="/scenarios"
+      hx-target="#scenario-sidebar"
+      hx-include="#scenario-form"
+      hx-swap="innerHTML">
+      Save State
+    </button>
+  </div>
+  <button type="submit" formaction="/export" formmethod="post" class="btn-quiet mt-2 w-full text-xs uppercase tracking-wide">Export Data</button>
+</form>

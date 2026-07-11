@@ -1,0 +1,38 @@
+{% for s in studies %}
+<a 
+  href="#"
+  hx-get="/models/{{ s.id }}" 
+  hx-target="#article-content"
+  hx-push-url="false"
+  class="group block p-5 rounded-xl border {% if active_id == s.id %}border-indigo-500 bg-indigo-500/5{% else %}border-zinc-800/80 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40{% endif %} transition-all flex flex-col justify-between"
+>
+  <div class="space-y-2">
+    <div class="flex items-start justify-between">
+      <h4 class="font-bold text-white group-hover:text-indigo-400 transition text-sm">{{ s.title }}</h4>
+      {% if active_id == s.id %}
+      <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[9px] font-mono font-bold uppercase tracking-wider border border-indigo-500/30">Active</span>
+      {% endif %}
+    </div>
+    <p class="text-xs text-zinc-400 leading-relaxed">{{ s.subtitle }}</p>
+  </div>
+
+  <div class="mt-4 pt-3 border-t border-zinc-800/60 grid grid-cols-2 gap-y-2 text-[10px]">
+    <div>
+      <span class="text-zinc-500 block uppercase tracking-wider text-[8px]">Interval</span>
+      <span class="font-mono text-zinc-300 font-semibold">{{ s.params.time_interval.title() }}ly</span>
+    </div>
+    <div>
+      <span class="text-zinc-500 block uppercase tracking-wider text-[8px]">Target APY</span>
+      <span class="font-mono text-emerald-400 font-semibold">{{ (s.params.promised_return * 100)|integer }}%</span>
+    </div>
+    <div>
+      <span class="text-zinc-500 block uppercase tracking-wider text-[8px]">Pop. Cap</span>
+      <span class="font-mono text-zinc-300 font-semibold">{{ s.params.population_limit|integer }}</span>
+    </div>
+    <div>
+      <span class="text-zinc-500 block uppercase tracking-wider text-[8px]">Growth</span>
+      <span class="font-mono text-zinc-300 font-semibold">{{ s.params.recruitment_model.title() }}</span>
+    </div>
+  </div>
+</a>
+{% endfor %}

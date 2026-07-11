@@ -1,0 +1,140 @@
+{% set is_mc = result.is_monte_carlo if result.is_monte_carlo is defined else result.get("is_monte_carlo", False) %}
+{% set summary = result.summary if result.summary is defined else result["summary"] %}
+
+<div class="space-y-6" id="results-content">
+  {% if is_mc %}
+  <!-- MONTE CARLO VIEW -->
+  <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="metric">
+      <span>Iterations</span>
+      <strong>{{ result.iterations|integer }}</strong>
+    </div>
+    <div class="metric">
+      <span>Avg Max Liquidity</span>
+      <strong>{{ summary.avg_max_cash_pool|currency }}</strong>
+    </div>
+    <div class="metric">
+      <span>Avg Profitable Ratio</span>
+      <strong>{{ summary.avg_profitable_ratio }}%</strong>
+    </div>
+    <div class="metric {% if summary.survival_rate < 50 %}loss{% else %}profit{% endif %}">
+      <span>Survival Rate ({{ summary.time_interval }}s)</span>
+      <strong>{{ summary.survival_rate }}%</strong>
+    </div>
+    <div class="metric loss col-span-4">
+      <span>Average Time to Collapse</span>
+      <strong>{{ summary.avg_collapse_period }} {{ summary.time_interval }}s</strong>
+    </div>
+  </section>
+
+  <section class="grid gap-4 xl:grid-cols-1">
+    <div class="panel">
+      <div class="panel-heading">
+        <h2>Collapse Probability Distribution</h2>
+      </div>
+      <div class="chart-box">
+        <canvas id="monteCarloChart"></canvas>
+      </div>
+    </div>
+  </section>
+  {% else %}
+  <!-- STANDARD SIMULATION VIEW -->
+  {% set timeline = result.timeline if result.timeline is defined else result["timeline"] %}
+  <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="metric">
+      <span>Total participants</span>
+      <strong>{{ summary.total_participants|integer }}</strong>
+    </div>
+    <div class="metric">
+      <span>Cash pool</span>
+      <strong>{{ summary.cash_pool|currency }}</strong>
+    </div>
+    <div class="metric">
+      <span>Total contributions</span>
+      <strong>{{ summary.total_contributions|currency }}</strong>
+    </div>
+    <div class="metric">
+      <span>Total payouts</span>
+      <strong>{{ summary.total_payouts|currency }}</strong>
+    </div>
+    <div class="metric profit">
+      <span>Profitable</span>
+      <strong>{{ summary.profitable_participants|integer }}</strong>
+    </div>
+    <div class="metric loss">
+      <span>Losing Money</span>
+      <strong>{{ summary.losing_participants|integer }}</strong>
+    </div>
+    <div class="metric {% if summary.collapse_period %}loss{% endif %}">
+      <span>Time to Collapse</span>
+      <strong>{{ summary.collapse_label }}</strong>
+    </div>
+    <div class="metric">
+      <span>Sustainability</span>
+      <strong>{{ summary.sustainability_ratio }}</strong>
+    </div>
+  </section>
+
+  <section class="grid gap-4 xl:grid-cols-2">
+    <div class="panel">
+      <div class="panel-heading">
+        <h2>Participant Volume {% if compare_result %} (vs {{ compare_result.name }}) {% endif %}</h2>
+      </div>
+      <div class="chart-box">
+        <canvas id="participantsChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-heading">
+        <h2>Liquidity Dynamics {% if compare_result %} (vs {{ compare_result.name }}) {% endif %}</h2>
+      </div>
+      <div class="chart-box">
+        <canvas id="cashChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="panel-heading">
+      <h2>Simulation Ledger</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-zinc-800 text-sm">
+        <thead class="bg-zinc-900/50 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+          <tr>
+            <th class="px-4 py-3 font-mono">Period</th>
+            <th class="px-4 py-3 text-right">New Vol</th>
+            <th class="px-4 py-3 text-right">Total Vol</th>
+            <th class="px-4 py-3 text-right">Liquidity</th>
+            <th class="px-4 py-3 text-right">Outflow</th>
+            <th class="px-4 py-3 text-right">Drawdown (Users)</th>
+            <th class="px-4 py-3 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/50 bg-transparent">
+          {% for row in timeline %}
+            <tr class="hover:bg-zinc-800/30 transition-colors {% if row.collapse %}bg-rose-500/5{% endif %}">
+              <td class="whitespace-nowrap px-4 py-2 font-medium text-zinc-300 font-mono text-xs">{{ row.label }}</td>
+              <td class="px-4 py-2 text-right text-zinc-400">{{ row.new_participants|integer }}</td>
+              <td class="px-4 py-2 text-right text-white">{{ row.total_participants|integer }}</td>
+              <td class="px-4 py-2 text-right text-white">{{ row.cash_pool|currency }}</td>
+              <td class="px-4 py-2 text-right text-rose-400">{{ row.total_payouts|currency }}</td>
+              <td class="px-4 py-2 text-right text-zinc-400">{{ row.losing_participants|integer }}</td>
+              <td class="px-4 py-2 text-right">
+                {% if row.collapse %}
+                  <span class="rounded bg-rose-500/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-400 border border-rose-500/20">Collapsed</span>
+                {% else %}
+                  <span class="rounded bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/20">Active</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script type="application/json" id="chart-payload">{{ chart_payload|safe }}</script>
+<script>window.ChainFlow && window.ChainFlow.renderCharts();</script>

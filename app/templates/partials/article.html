@@ -1,0 +1,89 @@
+<div class="max-w-6xl mx-auto space-y-8 pb-20">
+  
+  <!-- Top Section: History on Left, Chart on Right -->
+  <div class="grid gap-8 lg:grid-cols-5 items-start">
+    
+    <!-- Left Column: History (span 2) -->
+    <div class="lg:col-span-2 flex flex-col h-[400px]">
+      <div class="space-y-1 border-l-2 border-indigo-500 pl-4 py-0.5 shrink-0 mb-4">
+        <span class="text-[10px] uppercase tracking-widest font-mono text-zinc-500">Active Analysis</span>
+        <h2 class="text-2xl font-extrabold text-white tracking-tight">{{ study.title }}</h2>
+        <p class="text-sm text-zinc-400 font-medium">{{ study.subtitle }}</p>
+      </div>
+
+      <article class="text-sm text-zinc-300 leading-relaxed space-y-4 prose prose-invert flex-1 overflow-hidden relative">
+        <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#09090b] to-transparent pointer-events-none z-10"></div>
+        {{ study.overview_html | safe }}
+        
+        <div class="border-t border-zinc-800/60 pt-4 mt-4 space-y-3">
+          {{ study.history_html | safe }}
+        </div>
+      </article>
+
+      <div class="pt-3 shrink-0">
+        <a href="/models/{{ study.id }}/history" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1.5 transition-all">
+          Learn more about this history
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Right Column: Unified Chart (span 3) -->
+    <div class="lg:col-span-3 panel border-zinc-800/80 bg-zinc-900/30 p-6 rounded-xl flex flex-col h-[400px]">
+      <div class="panel-heading mb-4 flex justify-between items-center">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-400">Real-Time Simulation Ledger</h2>
+        <span class="text-[10px] text-zinc-500 font-mono">Dual Axis: Users (L) / Capital (R)</span>
+      </div>
+      <div class="chart-box flex-1 min-h-0 relative">
+        <canvas id="mainSimulationChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section: State Metrics Cards & Controls (Stretched Below) -->
+  <div class="pt-8 border-t border-zinc-900 space-y-6">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Running Duration</span>
+        <strong id="live-period" class="font-mono text-indigo-400 text-2xl block mt-1">0</strong>
+      </div>
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Active Members</span>
+        <strong id="live-participants" class="font-mono text-white text-2xl block mt-1">0</strong>
+      </div>
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Period Outflow</span>
+        <strong id="live-payout" class="font-mono text-rose-400 text-2xl block mt-1">$0.00</strong>
+      </div>
+      <div class="metric bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-lg">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">System Yield</span>
+        <strong id="live-yield" class="font-mono text-emerald-400 text-2xl block mt-1">{{ (study.params.promised_return * 100)|integer }}%</strong>
+      </div>
+    </div>
+
+    <!-- Playback controls -->
+    <div class="flex items-center gap-3">
+      <div id="live-status" class="px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
+        ACTIVE
+      </div>
+      <button onclick="window.ChainFlow && window.ChainFlow.replaySimulation()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Replay
+      </button>
+    </div>
+  </div>
+
+</div>
+
+{% if not full_page %}
+<div id="sidebar-nav" hx-swap-oob="true">
+  {% include "partials/sidebar_nav.html" %}
+</div>
+{% endif %}
+
+<script type="application/json" id="simulation-payload">{{ full_payload|safe }}</script>
+<script>
+  if (window.ChainFlow) {
+    window.ChainFlow.startSimulation();
+  }
+</script>

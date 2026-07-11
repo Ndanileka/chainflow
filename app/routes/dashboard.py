@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -336,11 +336,10 @@ def render_case_study(request: Request, model_id: str, full_page: bool, currency
 
     # Override currency and apply scaling factor (1 USD = 18 ZAR)
     rate = 18.0 if currency == "ZAR" else 1.0
-    sim_params = replace(
-        study.params,
-        currency=currency,
-        contribution_amount=study.params.contribution_amount * rate
-    )
+    sim_params = study.params.model_copy(update={
+        "currency": currency,
+        "contribution_amount": study.params.contribution_amount * rate
+    })
 
     result = run_simulation(sim_params)
     
